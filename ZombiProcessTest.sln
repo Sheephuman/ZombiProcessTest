@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35913.81 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimerZonbiee", "ZombiProcessTest\TimerZonbiee.csproj", "{E61F3AE5-9924-4ADC-99A5-C2662D977AFC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ffmpeg_ZombeeProcess", "ffmpeg_ZombeeProcess\ffmpeg_ZombeeProcess.csproj", "{77735A25-08BB-4B59-96D9-15D9076DEFBD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E61F3AE5-9924-4ADC-99A5-C2662D977AFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E61F3AE5-9924-4ADC-99A5-C2662D977AFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E61F3AE5-9924-4ADC-99A5-C2662D977AFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E61F3AE5-9924-4ADC-99A5-C2662D977AFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77735A25-08BB-4B59-96D9-15D9076DEFBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77735A25-08BB-4B59-96D9-15D9076DEFBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77735A25-08BB-4B59-96D9-15D9076DEFBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77735A25-08BB-4B59-96D9-15D9076DEFBD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4ECED2BA-EB1B-40EA-BF55-62527894E8BB}
+	EndGlobalSection
+EndGlobal
