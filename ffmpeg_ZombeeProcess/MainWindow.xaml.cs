@@ -21,6 +21,7 @@ namespace ffmpeg_ZombeeProcess
             // MainWindowを閉じたときにアプリケーション全体を終了するように設定 ゾンビプロセス化しないために必要
 
             Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            Application.Current.Shutdown();
 
             //ShutDownメソッドを呼ばないと ゾンビプロセス化する
         }
