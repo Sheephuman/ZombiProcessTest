@@ -17,14 +17,20 @@ namespace ffmpeg_ZombeeProcess
         {
             InitializeComponent();
 
+            // Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;　default。
+            // MainWindowを閉じたときにアプリケーション全体を終了するように設定 ゾンビプロセス化しないために必要
+
             Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
+            //ShutDownメソッドを呼ばないと ゾンビプロセス化する
         }
         Thread th1 = null!;
         private void testButton_Click(object sender, RoutedEventArgs e)
         {
             th1 = new Thread(async () => await RunFfmpegAsync());
-            th1.IsBackground = true;
+            th1.IsBackground = false;
+            //falseでフォアグラウンド動作。
+
 
             // ここでffmpegの実行を行う
             th1.Start();
@@ -53,21 +59,21 @@ namespace ffmpeg_ZombeeProcess
                 // 標準出力とエラー出力のコールバックを設定
 
 
-
-                process.ErrorDataReceived += async (s, ev) =>
+                ///実験結果　非同期メソッド内でここのasync・awaitを不使用にするとゾンビプロセス化する
+                process.ErrorDataReceived += (s, ev) =>
                 {
                     if (ev.Data != null)
                     {
 
 
-                        await Dispatcher.InvokeAsync(() =>
-                        {
+                        Dispatcher.InvokeAsync(() =>
+                       {
 
-                            OutputTextBox.AppendText(ev.Data + Environment.NewLine);
-                            OutputTextBox.ScrollToEnd(); // テキストボックスをスクロールして最新の出力を表示
-                        });
+                           OutputTextBox.AppendText(ev.Data + Environment.NewLine);
+                           OutputTextBox.ScrollToEnd(); // テキストボックスをスクロールして最新の出力を表示
+                       });
 
-                        await Task.Delay(100); // 適切な遅延を入れることでUIの更新をスムーズにする
+                        Task.Delay(100); // 適切な遅延を入れることでUIの更新をスムーズにする
                     }
                 };
 
@@ -75,6 +81,11 @@ namespace ffmpeg_ZombeeProcess
                 process.Exited += async (s, ev) =>
                 {
                     // WaitForExitを呼ばない（バッファが残る可能性）
+                    // 終了を待つ（キャンセルトークンを使用）
+                    ///ゾンビプロセス化しない
+                    //_cts.Cancel();
+
+
 
                     await Dispatcher.InvokeAsync(() => MessageBox.Show("ffmpeg process exited."));
                 };
@@ -86,12 +97,12 @@ namespace ffmpeg_ZombeeProcess
 
 
 
-                // 終了を待つ（キャンセルトークンを使用）
+
                 try
                 {
+                    await process.WaitForExitAsync(); // キャンセルトークンを使用して非同期に待機
 
 
-                    await process.WaitForExitAsync();
                 }
                 catch
                 {
