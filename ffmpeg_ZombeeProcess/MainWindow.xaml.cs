@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace ffmpeg_ZombeeProcess
 {
@@ -17,29 +18,32 @@ namespace ffmpeg_ZombeeProcess
         {
             InitializeComponent();
 
-            // Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;　default。
+            Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             // MainWindowを閉じたときにアプリケーション全体を終了するように設定 ゾンビプロセス化しないために必要
 
-            Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            Application.Current.Shutdown();
 
-            //ShutDownメソッドを呼ばないと ゾンビプロセス化する
+
         }
         Thread th1 = null!;
-        private void testButton_Click(object sender, RoutedEventArgs e)
+        private void RunSyncButton_Click(object sender, RoutedEventArgs e)
         {
-            th1 = new Thread(async () => await RunFfmpegAsync());
+            RunFfmpeg(OutputTextBox);
+
+            th1 = new Thread(() => RunFfmpeg(OutputTextBox));
+
             th1.IsBackground = false;
+
+
             //falseでフォアグラウンド動作。
 
 
             // ここでffmpegの実行を行う
             th1.Start();
-
-
-
+            //Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            //　わざとShutDownModeを変える　→　Close()でゾンビ化
         }
-        private async Task RunFfmpegAsync()
+
+        private async void RunFfmpegAsync()
         {
 
             var startInfo = new ProcessStartInfo
@@ -52,145 +56,155 @@ namespace ffmpeg_ZombeeProcess
                 CreateNoWindow = true
             };
 
-            using (process = new Process())
+            process = new Process();
+
+            process.StartInfo = startInfo;
+            process.EnableRaisingEvents = true;
+
+            // 標準出力とエラー出力のコールバックを設定
+
+
+
+            process.ErrorDataReceived += (s, ev) =>
             {
-                process.StartInfo = startInfo;
-                process.EnableRaisingEvents = true;
-
-                // 標準出力とエラー出力のコールバックを設定
-
-
-                ///実験結果　非同期メソッド内でここのasync・awaitを不使用にするとゾンビプロセス化する
-                process.ErrorDataReceived += (s, ev) =>
+                if (ev.Data != null)
                 {
-                    if (ev.Data != null)
-                    {
 
 
-                        Dispatcher.InvokeAsync(() =>
-                       {
+                    Dispatcher.InvokeAsync(() =>
+                   {
 
-                           OutputTextBox.AppendText(ev.Data + Environment.NewLine);
-                           OutputTextBox.ScrollToEnd(); // テキストボックスをスクロールして最新の出力を表示
-                       });
-
-                        Task.Delay(100); // 適切な遅延を入れることでUIの更新をスムーズにする
-                    }
-                };
-
-                // Exitedイベント（問題を引き起こす可能性のある実装）
-                process.Exited += async (s, ev) =>
-                {
-                    // WaitForExitを呼ばない（バッファが残る可能性）
-                    // 終了を待つ（キャンセルトークンを使用）
-                    ///ゾンビプロセス化しない
-                    //_cts.Cancel();
-
-
-
-                    await Dispatcher.InvokeAsync(() => MessageBox.Show("ffmpeg process exited."));
-                };
-
-                // プロセス開始
-                process.Start();
-
-                process.BeginErrorReadLine();
-
-
-
-
-                try
-                {
-                    await process.WaitForExitAsync(); // キャンセルトークンを使用して非同期に待機
-
-
+                       OutputTextBox.AppendText(ev.Data + Environment.NewLine);
+                       OutputTextBox.ScrollToEnd(); // テキストボックスをスクロールして最新の出力を表示
+                   });
+                    _cts.Cancel(); // キャンセルトークンをキャンセル
+                    Task.Delay(100); // 適切な遅延を入れることでUIの更新をスムーズにする
                 }
-                catch
-                {
-                    // 例外を無視（問題を悪化させる）
-                }
-            }
-        }
-
-
-
-        private void RunFfmpeg()
-        {
-
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "ffmpeg.exe",
-                Arguments = "-i test.mp4 -y output.mp4",
-                UseShellExecute = false,
-                RedirectStandardInput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
             };
 
-            using (process = new Process())
+            // Exitedイベント（問題を引き起こす可能性のある実装）
+            process.Exited += (s, ev) =>
             {
-                process.StartInfo = startInfo;
-                process.EnableRaisingEvents = true;
-
-                // 標準出力とエラー出力のコールバックを設定
-
-
-
-                process.ErrorDataReceived += async (s, ev) =>
-                {
-                    if (ev.Data != null)
-                    {
-
-                        // バッファに追加（スレッドセーフでない）
-                        await Dispatcher.InvokeAsync(() =>
-                           {
-
-                               OutputTextBox.AppendText(ev.Data + Environment.NewLine);
-                               OutputTextBox.ScrollToEnd(); // テキストボックスをスクロールして最新の出力を表示
-                           });
-
-                        await Task.Delay(100); // 適切な遅延を入れることでUIの更新をスムーズにする
-                    }
-                };
-
-                // Exitedイベント（問題を引き起こす可能性のある実装）
-                process.Exited += async (s, ev) =>
-                {
-                    // WaitForExitを呼ばない（バッファが残る可能性）
-
-                    await Dispatcher.InvokeAsync(() => MessageBox.Show("ffmpeg process exited."));
-                };
-
-                // プロセス開始
-                process.Start();
-
-                process.BeginErrorReadLine();
-
-
-
+                // WaitForExitを呼ばない（バッファが残る可能性）
                 // 終了を待つ（キャンセルトークンを使用）
-                try
-                {
+                ///ゾンビプロセス化しない
+                //_cts.Cancel();
 
 
-                    //process.WaitForExitAsync();
-                }
-                catch
-                {
-                    // 例外を無視（問題を悪化させる）
-                }
+
+                Dispatcher.InvokeAsync(() => MessageBox.Show("ffmpeg process exited."));
+            };
+
+            // プロセス開始
+            process.Start();
+
+            process.BeginErrorReadLine();
+
+
+
+
+            try
+            {
+                await process.WaitForExitAsync(); // キャンセルトークンを使用して非同期に待機
+
+
             }
-            // usingブロックを抜けた後、プロセスが完全に解放されない可能性
+            catch
+            {
+                // 例外を無視（問題を悪化させる）
+            }
         }
+
+
+
+
+
+        private void RunFfmpeg(TextBox textBox)
+        {
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "ffmpeg.exe",
+                Arguments = "-i test.mp4 -y output.mp4",
+                UseShellExecute = false,
+                RedirectStandardInput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            //usingブロックを使用するとプロセスがそのScope内で解放されてしまうため、usingは使用しない
+            //→ゾンビ化のおそれ
+            process = new Process();
+
+
+            process.StartInfo = startInfo;
+            process.EnableRaisingEvents = true;
+
+            // 標準出力とエラー出力のコールバックを設定
+
+
+
+            process.ErrorDataReceived += (s, ev) =>
+            {
+                if (ev.Data != null)
+                {
+
+                    //textBoxのインスタンスで遅延実行
+                    Dispatcher.InvokeAsync(() =>
+                      {
+
+                          textBox.AppendText(ev.Data + Environment.NewLine);
+                          textBox.ScrollToEnd();
+
+
+
+                          // テキストボックスをスクロールして最新の出力を表示
+                      });
+                    //    var waitHandle = new ManualResetEvent(false);
+
+                    //  waitHandle.WaitOne(0); // キャンセルトークンをキャンセル
+
+
+                    //Task.Delay(100); // 適切な遅延を入れることでUIの更新をスムーズにする
+                }
+            };
+
+            // Exitedイベント（問題を引き起こす可能性のある実装）
+            process.Exited += (s, ev) =>
+            {
+                // WaitForExitを呼ばない（バッファが残る可能性）
+
+                Dispatcher.Invoke(() => MessageBox.Show("ffmpeg process exited."));
+            };
+
+            // プロセス開始
+            process.Start();
+
+            process.BeginErrorReadLine();
+
+
+
+            // 終了を待つ（キャンセルトークンを使用）
+
+        }
+
 
         private void StopButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                if (process is null)
+                    return;
+
+
+
+
                 StreamWriter inputWriter = process.StandardInput;
 
 
                 inputWriter.WriteLine("q");
+
+
             }
 
             catch (Exception ex)
@@ -199,6 +213,25 @@ namespace ffmpeg_ZombeeProcess
             }
             //inputWriter.Dispose();
             //解放させない
+        }
+
+        private void AsyncStartButton_Click(object sender, RoutedEventArgs e)
+        {
+            th1 = new Thread(() => RunFfmpegAsync());
+            th1.IsBackground = false;
+            //falseでフォアグラウンド動作。
+
+
+            // ここでffmpegの実行を行う
+            th1.Start();
+
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            //process.Kill(); // プロセスを強制終了
+            //th1.Join(); // スレッドの終了を待機
+            Application.Current.Shutdown();
         }
     }
 }
